@@ -2,18 +2,20 @@ import Parser
 
 
 class Program:
-    def __init__(self, sock):
+    def __init__(self, filter, writer, sock):
         self.sock = sock
+        self.filter = filter
+        self.writer = writer
 
     def run(self):
         self.sock.create()
         while True:
             data = self.sock.recv_data()
-            eth_data = Parser.ProtoParser.parse_eth(data[0])
-            if eth_data.proto == 2048:
-                ip_data = Parser.ProtoParser.parse_ip4(eth_data.data)
-                print(f'Source:{self.ip_to_string(ip_data.source_ip)},',
-                      f'Dest:{self.ip_to_string(ip_data.dest_ip)}')
+            self.writer.write_packet(data[0])
+            parsed = Parser.ParsedPacket(data[0])
+            if parsed.is_ip:
+                print(f'Source:{self.ip_to_string(parsed.ip_data.source_ip)},',
+                      f'Dest:{self.ip_to_string(parsed.ip_data.dest_ip)}')
             print('Not ip packet')
 
     @staticmethod
