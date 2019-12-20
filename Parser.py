@@ -52,6 +52,8 @@ class ProtoParser:
     def parse_udp(data):
         header = ProtoParser.UDP_DATA(*struct.unpack('>HHHH', data[0:8]))
         inner_data = data[8:]
+        return UDPData(header.source_port, header.dest_port, header.lenght,
+                       header.checksum, inner_data)
 
 
     @staticmethod
@@ -60,7 +62,7 @@ class ProtoParser:
         ip2 = (num >> 8) & 0xff
         ip1 = (num >> 16) & 0xff
         ip0 = (num >> 24) & 0xff
-        return ip0, ip1, ip2, ip3
+        return '.'.join(map(str, (ip0, ip1, ip2, ip3)))
 
 
 class EthData:
@@ -130,12 +132,16 @@ class ParsedPacket:
         self.is_udp = False
 
         self.eth_data = ProtoParser.parse_eth(raw_packet)
+        self.inner_data = self.eth_data.data
         if self.eth_data.proto == 2048:
             self.is_ip = True
-            self.ip_data = ProtoParser.parse_ip4(self.eth_data.data)
+            self.ip_data = ProtoParser.parse_ip4(self.inner_data)
+            self.inner_data = self.ip_data.data
             if self.ip_data.proto == 6:
                 self.is_tcp = True
-                self.tcp_data = ProtoParser.parse_tcp(self.ip_data.data)
+                self.tcp_data = ProtoParser.parse_tcp(self.inner_data)
+                self.inner_data = self.tcp_data.data
             if self.ip_data.proto == 17:
                 self.is_udp = True
-                self.udp_data = ProtoParser.parse_udp(self.ip_data.data)
+                self.udp_data = ProtoParser.parse_udp(self.inner_data)
+                self.inner_data = self.udp_data.data

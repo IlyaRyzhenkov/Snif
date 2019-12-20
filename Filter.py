@@ -1,80 +1,15 @@
-import enum
-import itertools
 import socket
 import sys
-import Program
 
 
 class Filter:
     def __init__(self, args):
-        self.dest_ip = set()
-        self.source_ip = set()
-        self.dest_port = set()
-        self.source_port = set()
-
-        place = Place.BOTH
-        level = None
-        ip = None
-        port = None
-        print(args)
-        for arg in itertools.chain.from_iterable(args):
-            item = Filter.get_item_by_arg(arg)
-            if isinstance(item, Place):
-                place = item
-                continue
-            if isinstance(item, Level):
-                level = item
-                continue
-
-            if item == Command.ADD:
-                if ip and not port:
-                    if place == Place.DEST:
-                        self.dest_ip.add(ip)
-                    elif place == Place.SOURCE:
-                        self.source_ip.add(ip)
-                    else:
-                        self.source_ip.add(ip)
-                        self.dest_ip.add(ip)
-
-                if ip and port:
-                    if place == Place.DEST:
-                        self.dest_port.add((ip, port))
-                    elif place == Place.SOURCE:
-                        self.source_port.add((ip, port))
-                    else:
-                        self.source_port.add((ip, port))
-                        self.dest_port.add((ip, port))
-                continue
-
-            if level == Level.IP:
-                ip = Filter.get_ip(arg)
-
-            if level == level.PORT:
-                port = Filter.get_port(arg)
-        print(self.dest_ip)
+        self.rules = []
+        for arg_list in args:
+            self.rules.append(Rule(arg_list))
 
     def filter(self, packet):
-        if packet.is_ip:
-            if Program.Program.ip_to_string(packet.ip_data.source_ip) in self.source_ip or Program.Program.ip_to_string(packet.ip_data.dest_ip) in self.dest_ip:
-                return True
-        return False
-
-    @staticmethod
-    def get_item_by_arg(arg):
-        arg = arg.lower()
-        if arg == 'dest':
-            return Place.DEST
-        if arg == 'source':
-            return Place.SOURCE
-        if arg == 'both':
-            return Place.BOTH
-        if arg == 'ip':
-            return Level.IP
-        if arg == 'port' or arg == ':':
-            return Level.PORT
-        if arg == 'add':
-            return Command.ADD
-        return arg
+        return any((rule.filter(packet) for rule in self.rules))
 
     @staticmethod
     def get_ip(addr):
@@ -96,16 +31,44 @@ class Filter:
             return None
 
 
-class Place(enum.Enum):
-    BOTH = 0
-    SOURCE = 1
-    DEST = 2
+class Rule:
+    def __init__(self, args):
+        self.source_ip = None
+        self.dest_ip = None
+        self.source_port = None
+        self.dest_port = None
 
+        for i in range(0, len(args), 2):
+            try:
+                if args[i] == 's_ip':
+                    self.source_ip = Filter.get_ip(args[i+1])
+                elif args[i] == 'd_ip':
+                    self.dest_ip = Filter.get_ip(args[i+1])
+                elif args[i] == 's_port':
+                    self.source_port = Filter.get_port(args[i+1])
+                elif args[i] == 'd_port':
+                    self.dest_port = Filter.get_port(args[i+1])
+                else:
+                    raise ValueError
+            except Exception as e:
+                sys.stderr.write('Error while parsing filter args', e, sep='\n')
 
-class Level(enum.Enum):
-    IP = 1
-    PORT = 2
-
-
-class Command(enum.Enum):
-    ADD = 1
+    def filter(self, packet):
+        if not packet.is_ip:
+            return False
+        if self.source_ip:
+            if packet.ip_data.source_ip != self.source_ip:
+                return False
+        if self.dest_ip:
+            if packet.ip_data.dest_ip != self.dest_ip:
+                return False
+        if self.dest_port or self.source_port:
+            if not (packet.is_tcp or packet.is_udp):
+                return False
+        if self.source_port:
+            if packet.tcp_data.source_port != self.source_port:
+                return False
+        if self.dest_port:
+            if packet.tcp_data.dest_port != self.dest_port:
+                return False
+        return True

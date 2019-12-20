@@ -16,9 +16,5 @@ class Program:
             self.writer.write_packet(data[0], time)
             parsed = Parser.ParsedPacket(data[0])
             if self.filter.filter(parsed):
-                print(f'Source:{self.ip_to_string(parsed.ip_data.source_ip)},',
-                      f'Dest:{self.ip_to_string(parsed.ip_data.dest_ip)}')
-
-    @staticmethod
-    def ip_to_string(ip):
-        return f'{ip[0]}.{ip[1]}.{ip[2]}.{ip[3]}'
+                print(f'Source:{parsed.ip_data.source_ip},',
+                      f'Dest:{parsed.ip_data.dest_ip}')
