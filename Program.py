@@ -9,8 +9,10 @@ class Program:
         self.sock.create()
         while True:
             data = self.sock.recv_data()
-            eth_data = Parser.ProtoParser.parse_eth(data)
+            eth_data = Parser.ProtoParser.parse_eth(data[0])
             if eth_data.proto == 2048:
+                print(eth_data.data)
+                exit()
                 ip_data = Parser.ProtoParser.parse_ip4(eth_data.data)
                 print(f'Source:{self.ip_to_string(ip_data.source_ip)},',
                       f'Dest:{self.ip_to_string(ip_data.dest_ip)}')

@@ -4,12 +4,11 @@ import struct
 class ProtoParser:
     @staticmethod
     def parse_eth(data):
-        dest_mac = struct.unpack('BBBBBB', data[0:7])
-        source_mac = struct.unpack('BBBBBB', data[7:14])
-        next_proto = struct.unpack('>H', data[14:16])[0]
-        next_level_data = data[16:-4]
-        checksum = struct.unpack('>I', data[-4:])[0]
-        return EthData(dest_mac, source_mac, next_proto, next_level_data, checksum)
+        dest_mac = struct.unpack('BBBBBB', data[0:6])
+        source_mac = struct.unpack('BBBBBB', data[6:12])
+        next_proto = struct.unpack('>H', data[12:14])[0]
+        next_level_data = data[14:]
+        return EthData(dest_mac, source_mac, next_proto, next_level_data)
 
     @staticmethod
     def parse_ip4(data):
@@ -30,20 +29,19 @@ class ProtoParser:
 
     @staticmethod
     def get_ip_from_int(num):
-        ip3 = num & 0b1111
-        ip2 = num & 0b11110000
-        ip1 = num & 0b111100000000
-        ip0 = num & 0b1111000000000000
+        ip3 = num & 0b11111111
+        ip2 = (num > 8) & 0b11111111
+        ip1 = (num > 16) & 0b11111111
+        ip0 = (num > 24) & 0b11111111
         return ip0, ip1, ip2, ip3
 
 
 class EthData:
-    def __init__(self, dest_mac, source_mac, proto, next_level_data, checksum):
+    def __init__(self, dest_mac, source_mac, proto, next_level_data):
         self.dest_mac = dest_mac
         self.source_mac = source_mac
         self.proto = proto
         self.data = next_level_data
-        self.checksum = checksum
 
 
 class IpData:
