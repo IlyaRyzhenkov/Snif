@@ -1,7 +1,18 @@
 import struct
+import collections
 
 
 class ProtoParser:
+    IP_DATA = collections.namedtuple(
+        'IP_DATA', ['version_length', 'type_of_serv', 'packet_length',
+                    'packet_id', 'flags_offset', 'ttl', 'next_proto',
+                    'checksum', 'source_ip', 'dest_ip'])
+    TCP_DATA = collections.namedtuple(
+        'TCP_DATA', ['source_port', 'dest_port', 'seq', 'ack', 'length_flags',
+                     'window_size', 'checksum', 'urgent_pointer'])
+    UDP_DATA = collections.namedtuple(
+        'UDP_DATA', ['source_port', 'dest_port', 'lenght', 'checksum'])
+
     @staticmethod
     def parse_eth(data):
         dest_mac = struct.unpack('BBBBBB', data[0:6])
@@ -12,27 +23,43 @@ class ProtoParser:
 
     @staticmethod
     def parse_ip4(data):
-        version_length, type_of_serv, packet_length, packet_id,\
-        flags_ofset, ttl, next_proto, checksum, source_ip,\
-        dest_ip = struct.unpack('>BBHHHBBHII', data[0:20])
-        version = version_length & 0b11110000
-        header_length = version_length & 0b1111
-        flags = flags_ofset & 0b1110000000000000
-        ofset = flags_ofset & 0b0001111111111111
+        header = ProtoParser.IP_DATA(*struct.unpack('>BBHHHBBHII', data[0:20]))
+        version = (header.version_length >> 4) & 0xf
+        header_length = header.version_length & 0xf
+        flags = (header.flags_offset >> 13) & 0b111
+        ofset = header.flags_offset & 0b0001111111111111
         parameters = data[20:header_length*4]
         next_level_data = data[header_length*4:]
-        return IpData(version, header_length, type_of_serv, packet_length,
-                      packet_id, flags, ofset, ttl, next_proto, checksum,
-                      ProtoParser.get_ip_from_int(dest_ip),
-                      ProtoParser.get_ip_from_int(source_ip), parameters,
+        return IpData(version, header_length, header.type_of_serv,
+                      header.packet_length, header.packet_id, flags, ofset,
+                      header.ttl, header.next_proto, header.checksum,
+                      ProtoParser.get_ip_from_int(header.dest_ip),
+                      ProtoParser.get_ip_from_int(header.source_ip), parameters,
                       next_level_data)
 
     @staticmethod
+    def parse_tcp(data):
+        header = ProtoParser.TCP_DATA(*struct.unpack('>HHIIHHHH', data[0:20]))
+        header_length = (header.length_flags >> 12) & 0xf
+        flags = header_length & 0b111111
+        options = data[20:header_length*4]
+        inner_data = data[header_length*4:]
+        return TCPData(header.source_port, header.dest_port, header.seq, header.ack,
+                       header_length, flags, header.window_size, header.checksum,
+                       header.urgent_pointer, options, inner_data)
+
+    @staticmethod
+    def parse_udp(data):
+        header = ProtoParser.UDP_DATA(*struct.unpack('>HHHH', data[0:8]))
+        inner_data = data[8:]
+
+
+    @staticmethod
     def get_ip_from_int(num):
-        ip3 = num & 0b11111111
-        ip2 = (num > 8) & 0b11111111
-        ip1 = (num > 16) & 0b11111111
-        ip0 = (num > 24) & 0b11111111
+        ip3 = num & 0xff
+        ip2 = (num >> 8) & 0xff
+        ip1 = (num >> 16) & 0xff
+        ip0 = (num >> 24) & 0xff
         return ip0, ip1, ip2, ip3
 
 
@@ -65,3 +92,50 @@ class IpData:
         else:
             self.parameters = None
         self.data = next_level_data
+
+
+class TCPData:
+    def __init__(self, source_port, dest_port, seq, ack,
+                 header_length, flags, window_size, checksum,
+                 urgent_pointer, options, data):
+        self.source_port = source_port
+        self.dest_port = dest_port
+        self.seq = seq
+        self.ack = ack
+        self.header_length = header_length
+        self.flags = flags
+        self.window_size = window_size
+        self.checksum = checksum
+        self.urgent_pointer = urgent_pointer
+        if options:
+            self.options = options
+        else:
+            self.options = None
+        self.data = data
+
+
+class UDPData:
+    def __init__(self, source_port, dest_port, length, checksum, data):
+        self.source_port = source_port
+        self.dest_port = dest_port
+        self.length = length
+        self.checksum = checksum
+        self.data = data
+
+
+class ParsedPacket:
+    def __init__(self, raw_packet):
+        self.is_ip = False
+        self.is_tcp = False
+        self.is_udp = False
+
+        self.eth_data = ProtoParser.parse_eth(raw_packet)
+        if self.eth_data.proto == 2048:
+            self.is_ip = True
+            self.ip_data = ProtoParser.parse_ip4(self.eth_data.data)
+            if self.ip_data.proto == 6:
+                self.is_tcp = True
+                self.tcp_data = ProtoParser.parse_tcp(self.ip_data.data)
+            if self.ip_data.proto == 17:
+                self.is_udp = True
+                self.udp_data = ProtoParser.parse_udp(self.ip_data.data)
