@@ -41,7 +41,7 @@ if __name__ == '__main__':
         writer.open(parsed.File)
     timer = Timer.Timer()
 
-    program = Program.Program(filter, writer, timer, sock)
+    program = Program.Program(filter, writer, sock)
 
     try:
         program.run()
