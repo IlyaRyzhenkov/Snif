@@ -1,13 +1,18 @@
-import Parser, Timer, Visualiser
+import Parser, Timer, Visualiser, Statistics
 
 
 class Program:
-    def __init__(self, filter, writer, sock, timer=Timer.Timer(), visualiser=Visualiser.Visualiser()):
+    def __init__(
+            self, filter, writer, sock, timer=Timer.Timer(),
+            visualiser=Visualiser.Visualiser(), host='0.0.0.0',
+            additional_stat=Statistics.GroupIPStatManager([], '0.0.0.0')):
         self.sock = sock
         self.filter = filter
         self.timer = timer
         self.visualiser = visualiser
         self.writer = writer
+        self.general_stat = Statistics.GeneralStatistics(host)
+        self.stat = additional_stat
 
     def run(self):
         self.sock.create()
@@ -20,3 +25,4 @@ class Program:
             parsed = Parser.ParsedPacket(data[0])
             if self.filter.filter(parsed):
                 self.visualiser.print_packet(parsed, delta)
+            self.general_stat.update(parsed)
