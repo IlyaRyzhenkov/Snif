@@ -39,14 +39,10 @@ class GroupIPStatManager:
         for arg in args:
             try:
                 port_pos = self.find_port(arg)
-                print('kek')
                 ip = arg[0:port_pos]
                 port = arg[port_pos + 1:]
-                print('kek2')
                 self.stats.append(GroupIPStat(host_ip, ip, port))
-                print('kek3')
             except Exception as e:
-                print(e)
                 sys.stderr.write(f'Error parsing stat args:{arg}\n')
 
     def update(self, packet):

@@ -21,7 +21,16 @@ def parse_arguments():
     arg_parser.add_argument(
         '-s', '--statistics', metavar='stat arg', nargs='+', action='append',
         help='Use to set additional stat properties')
+    arg_parser.add_argument('-t', '--time', type=check_positive_float,
+        help='Set time interval for statistics')
     res = arg_parser.parse_args()
+    return res
+
+
+def check_positive_float(value):
+    res = float(value)
+    if res < 0:
+        raise argparse.ArgumentTypeError('Value should be positive float value')
     return res
 
 
@@ -50,6 +59,10 @@ if __name__ == '__main__':
         stat = Statistics.GroupIPStatManager(parsed.statistics, host)
     else:
         stat = Statistics.GroupIPStatManager([], host)
+
+    if parsed.time:
+        interval_timer = Timer.IntervalTimer(parsed.time, stat)
+        interval_timer.start()
 
     program = Program.Program(filter, writer, sock, host=host, additional_stat=stat)
     try:
