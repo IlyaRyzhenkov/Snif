@@ -34,8 +34,8 @@ class ProtoParser:
                       header.packet_length, header.packet_id, flags, ofset,
                       header.ttl, header.next_proto, header.checksum,
                       ProtoParser.get_ip_from_int(header.dest_ip),
-                      ProtoParser.get_ip_from_int(header.source_ip), parameters,
-                      next_level_data)
+                      ProtoParser.get_ip_from_int(header.source_ip),
+                      parameters, next_level_data)
 
     @staticmethod
     def parse_tcp(data):
@@ -44,9 +44,10 @@ class ProtoParser:
         flags = header.length_flags & 0b111111
         options = data[20:header_length*4]
         inner_data = data[header_length*4:]
-        return TCPData(header.source_port, header.dest_port, header.seq, header.ack,
-                       header_length, flags, header.window_size, header.checksum,
-                       header.urgent_pointer, options, inner_data)
+        return TCPData(
+            header.source_port, header.dest_port, header.seq, header.ack,
+            header_length, flags, header.window_size, header.checksum,
+            header.urgent_pointer, options, inner_data)
 
     @staticmethod
     def parse_udp(data):
@@ -57,7 +58,6 @@ class ProtoParser:
     @staticmethod
     def parse_icmp(data):
         return ICMPData(*struct.unpack('>BBH', data[0:4]), data=data[4:])
-
 
     @staticmethod
     def get_ip_from_int(num):
@@ -119,11 +119,13 @@ class TCPData:
         self.data = data
 
 
-class UDPData(collections.namedtuple('UDPData', ['source_port', 'dest_port', 'length', 'checksum', 'data'])):
+class UDPData(collections.namedtuple(
+     'UDPData', ['source_port', 'dest_port', 'length', 'checksum', 'data'])):
     pass
 
 
-class ICMPData(collections.namedtuple('ICMPData', ['type', 'code', 'checksum', 'data'])):
+class ICMPData(collections.namedtuple(
+     'ICMPData', ['type', 'code', 'checksum', 'data'])):
     pass
 
 

@@ -1,4 +1,7 @@
-import Parser, Timer, Visualiser, Statistics
+import Parser
+import Timer
+import Visualiser
+import Statistics
 
 
 class Program:

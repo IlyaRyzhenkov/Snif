@@ -9,7 +9,8 @@ class SocketAPI:
         self.mtu = 1500
 
     def create(self):
-        self.sock = socket.socket(socket.AF_PACKET, socket.SOCK_RAW, socket.htons(0x0003))
+        self.sock = socket.socket(
+            socket.AF_PACKET, socket.SOCK_RAW, socket.htons(0x0003))
         if self.interface:
             try:
                 self.sock.bind((self.interface, 0))
@@ -36,4 +37,3 @@ class SocketAPI:
         ip = '64.233.164.100'
         s.connect((ip, 80))
         return s.getsockname()[0]
-

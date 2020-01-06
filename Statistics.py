@@ -26,10 +26,11 @@ class GeneralStatistics:
             self.recv_bytes += packet.length
 
     def get_stat_str(self):
-        return (f'\nReceived ip packets:{self.recv_packets}, total {self.recv_bytes} '
-                f'bytes.\nSend ip packets:{self.send_packets}, total {self.send_bytes} '
-                f'bytes.\nNon ip packets:{self.not_ip_packets}, total {self.not_ip_bytes} '
-                f'bytes\n')
+        return (
+            f'\nReceived ip packets:{self.recv_packets}, total {self.recv_bytes} '
+            f'bytes.\nSend ip packets:{self.send_packets}, total {self.send_bytes} '
+            f'bytes.\nNon ip packets:{self.not_ip_packets}, total {self.not_ip_bytes} '
+            f'bytes\n')
 
 
 class GroupIPStatManager:
@@ -73,7 +74,8 @@ class GroupIPStatManager:
 
 
 class GroupIPStat:
-    MEASURE = collections.namedtuple('Measure', ['send_packets', 'send_bytes', 'recv_packets', 'recv_bytes'])
+    MEASURE = collections.namedtuple(
+        'Measure', ['send_packets', 'send_bytes', 'recv_packets', 'recv_bytes'])
 
     def __init__(self, host_ip, ip_settings, port_settings):
         self.host_ip = host_ip

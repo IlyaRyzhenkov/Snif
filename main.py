@@ -1,11 +1,12 @@
-import sys
-import Program
-import SocketAPI
 import argparse
+import sys
+
 import Filter
 import PcapWriter
-import Timer
+import Program
+import SocketAPI
 import Statistics
+import Timer
 
 
 def parse_arguments():
@@ -22,7 +23,7 @@ def parse_arguments():
         '-s', '--statistics', metavar='stat arg', nargs='+', action='append',
         help='Use to set additional stat properties')
     arg_parser.add_argument('-t', '--time', type=check_positive_float,
-        help='Set time interval for statistics')
+                            help='Set time interval for statistics')
     res = arg_parser.parse_args()
     return res
 

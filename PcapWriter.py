@@ -25,7 +25,7 @@ class PcapWriter:
         timestamp_seconds, timestamp_microseconds = time
         length = len(packet)
         return struct.pack(
-            '<IIII', timestamp_seconds,timestamp_microseconds, length, length)
+            '<IIII', timestamp_seconds, timestamp_microseconds, length, length)
 
     @staticmethod
     def create_global_header():
@@ -33,7 +33,7 @@ class PcapWriter:
         version1 = b'\x02\x00'
         version2 = b'\x04\x00'
         zone = b'\x00\x00\x00\x00'
-        sigfigs  = b'\x00\x00\x00\x00'
+        sigfigs = b'\x00\x00\x00\x00'
         snaplen = b'\x00\x00\x04\x00'
         network = b'\x01\x00\x00\x00'
         return magic + version1 + version2 + zone + sigfigs + snaplen + network

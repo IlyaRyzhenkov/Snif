@@ -35,13 +35,13 @@ class Rule:
         for i in range(0, len(args), 2):
             try:
                 if args[i] == 's_ip':
-                    self.source_ip = SocketAPI.SocketAPI.get_ip(args[i+1])
+                    self.source_ip = SocketAPI.SocketAPI.get_ip(args[i + 1])
                 elif args[i] == 'd_ip':
-                    self.dest_ip = SocketAPI.SocketAPI.get_ip(args[i+1])
+                    self.dest_ip = SocketAPI.SocketAPI.get_ip(args[i + 1])
                 elif args[i] == 's_port':
-                    self.source_port = Filter.get_port(args[i+1])
+                    self.source_port = Filter.get_port(args[i + 1])
                 elif args[i] == 'd_port':
-                    self.dest_port = Filter.get_port(args[i+1])
+                    self.dest_port = Filter.get_port(args[i + 1])
                 else:
                     raise ValueError
             except Exception as e:
