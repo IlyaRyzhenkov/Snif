@@ -5,6 +5,7 @@ import argparse
 import Filter
 import PcapWriter
 import Timer
+import Statistics
 
 
 def parse_arguments():
@@ -17,6 +18,9 @@ def parse_arguments():
         help=('Use filter for displaying:\n'
               '-f [s_ip ip] [d_ip ip] [s_port port] [d_port port] adds filter rule'))
     arg_parser.add_argument('-F', '--File', type=argparse.FileType('wb'))
+    arg_parser.add_argument(
+        '-s', '--statistics', metavar='stat arg', nargs='+', action='append',
+        help='Use to set additional stat properties')
     res = arg_parser.parse_args()
     return res
 
@@ -26,6 +30,9 @@ if __name__ == '__main__':
         sys.stderr.write('Windows don\'t supported\n')
         sys.exit(1)
     parsed = parse_arguments()
+
+    host = SocketAPI.SocketAPI.get_host()
+
     if parsed.filter:
         filter = Filter.Filter(parsed.filter)
     else:
@@ -39,9 +46,16 @@ if __name__ == '__main__':
         writer.open(parsed.File)
     timer = Timer.Timer()
 
-    program = Program.Program(filter, writer, timer, sock)
+    if parsed.statistics:
+        stat = Statistics.GroupIPStatManager(parsed.statistics, host)
+    else:
+        stat = Statistics.GroupIPStatManager([], host)
 
+    program = Program.Program(filter, writer, sock, host=host, additional_stat=stat)
     try:
         program.run()
+    except KeyboardInterrupt as e:
+        print(program.general_stat.get_stat_str())
+        print(program.stat.get_stat_str())
     finally:
         writer.close()

@@ -41,7 +41,7 @@ class ProtoParser:
     def parse_tcp(data):
         header = ProtoParser.TCP_DATA(*struct.unpack('>HHIIHHHH', data[0:20]))
         header_length = (header.length_flags >> 12) & 0xf
-        flags = header_length & 0b111111
+        flags = header.length_flags & 0b111111
         options = data[20:header_length*4]
         inner_data = data[header_length*4:]
         return TCPData(header.source_port, header.dest_port, header.seq, header.ack,
@@ -52,8 +52,11 @@ class ProtoParser:
     def parse_udp(data):
         header = ProtoParser.UDP_DATA(*struct.unpack('>HHHH', data[0:8]))
         inner_data = data[8:]
-        return UDPData(header.source_port, header.dest_port, header.lenght,
-                       header.checksum, inner_data)
+        return UDPData(*header, data=inner_data)
+
+    @staticmethod
+    def parse_icmp(data):
+        return ICMPData(*struct.unpack('>BBH', data[0:4]), data=data[4:])
 
 
     @staticmethod
@@ -116,20 +119,21 @@ class TCPData:
         self.data = data
 
 
-class UDPData:
-    def __init__(self, source_port, dest_port, length, checksum, data):
-        self.source_port = source_port
-        self.dest_port = dest_port
-        self.length = length
-        self.checksum = checksum
-        self.data = data
+class UDPData(collections.namedtuple('UDPData', ['source_port', 'dest_port', 'length', 'checksum', 'data'])):
+    pass
+
+
+class ICMPData(collections.namedtuple('ICMPData', ['type', 'code', 'checksum', 'data'])):
+    pass
 
 
 class ParsedPacket:
     def __init__(self, raw_packet):
+        self.length = len(raw_packet)
         self.is_ip = False
         self.is_tcp = False
         self.is_udp = False
+        self.is_icmp = False
 
         self.eth_data = ProtoParser.parse_eth(raw_packet)
         self.inner_data = self.eth_data.data
@@ -137,6 +141,10 @@ class ParsedPacket:
             self.is_ip = True
             self.ip_data = ProtoParser.parse_ip4(self.inner_data)
             self.inner_data = self.ip_data.data
+            if self.ip_data.proto == 1:
+                self.is_icmp = True
+                self.icmp_data = ProtoParser.parse_icmp(self.inner_data)
+                self.inner_data = self.icmp_data.data
             if self.ip_data.proto == 6:
                 self.is_tcp = True
                 self.tcp_data = ProtoParser.parse_tcp(self.inner_data)

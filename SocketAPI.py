@@ -23,6 +23,14 @@ class SocketAPI:
         return data
 
     @staticmethod
+    def get_ip(addr):
+        try:
+            return socket.gethostbyname(addr)
+        except OSError as e:
+            sys.stderr.write(f'Wrong address {addr}')
+            return None
+
+    @staticmethod
     def get_host():
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         ip = '64.233.164.100'

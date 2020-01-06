@@ -1,4 +1,4 @@
-import socket
+import SocketAPI
 import sys
 
 
@@ -12,14 +12,6 @@ class Filter:
         if not self.rules:
             return True
         return any((rule.filter(packet) for rule in self.rules))
-
-    @staticmethod
-    def get_ip(addr):
-        try:
-            return socket.gethostbyname(addr)
-        except OSError as e:
-            sys.stderr.write(f'Wrong address {addr}')
-            return None
 
     @staticmethod
     def get_port(num):
@@ -43,9 +35,9 @@ class Rule:
         for i in range(0, len(args), 2):
             try:
                 if args[i] == 's_ip':
-                    self.source_ip = Filter.get_ip(args[i+1])
+                    self.source_ip = SocketAPI.SocketAPI.get_ip(args[i+1])
                 elif args[i] == 'd_ip':
-                    self.dest_ip = Filter.get_ip(args[i+1])
+                    self.dest_ip = SocketAPI.SocketAPI.get_ip(args[i+1])
                 elif args[i] == 's_port':
                     self.source_port = Filter.get_port(args[i+1])
                 elif args[i] == 'd_port':
