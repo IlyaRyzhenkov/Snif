@@ -7,6 +7,7 @@ class Program:
         self.filter = filter
         self.timer = timer
         self.writer = writer
+        self.host = sock.get_host()
 
     def run(self):
         self.sock.create()
@@ -16,5 +17,9 @@ class Program:
             self.writer.write_packet(data[0], time)
             parsed = Parser.ParsedPacket(data[0])
             if self.filter.filter(parsed):
-                print(f'Source:{parsed.ip_data.source_ip},',
-                      f'Dest:{parsed.ip_data.dest_ip}')
+                if parsed.is_ip:
+                    if parsed.ip_data.source_ip == self.host:
+                        print(f'Send to {parsed.ip_data.dest_ip}      {len(data[0])} bytes')
+                    else:
+                        print(f'Received from {parsed.ip_data.source_ip}     {len(data[0])} bytes')
+

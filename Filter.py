@@ -9,6 +9,8 @@ class Filter:
             self.rules.append(Rule(arg_list))
 
     def filter(self, packet):
+        if not self.rules:
+            return True
         return any((rule.filter(packet) for rule in self.rules))
 
     @staticmethod
