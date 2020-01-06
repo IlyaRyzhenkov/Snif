@@ -41,7 +41,7 @@ class TestParser(unittest.TestCase):
         self.assertEqual(data.seq, 4052051994, 'Wrong sequence number')
         self.assertEqual(data.ack, 1362502537, 'Wrong ack number')
         self.assertEqual(data.header_length, 5, 'Wrong header length')
-        self.assertEqual(data.flags, 5, 'Wrong flags')
+        self.assertEqual(data.flags, 16, 'Wrong flags')
         self.assertEqual(data.window_size, 33, 'Wrong window size')
         self.assertEqual(data.urgent_pointer, 0, 'Wrong urgent poiner')
         self.assertIsNone(data.options, 'Wrong options')
